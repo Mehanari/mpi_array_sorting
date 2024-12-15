@@ -19,19 +19,39 @@ internal class Program
             CartesianCommunicator.Map(communicator, 2, dims, new bool[]{false, false});
 
             
-            int arraySize = 100;
-            int[] array = null;
-            
+            int[] subArray = null;
             if (communicator.Rank == 0)
             {
                 Random rand = new Random();
-                array = Enumerable.Range(0, arraySize).Select(_ => rand.Next(1000)).ToArray();
+                //array = Enumerable.Range(0, arraySize).Select(_ => rand.Next(1000)).ToArray();
+                int[] array = null;
+                int arraySize = 100;
+                array = new int[arraySize];
+                for (int i = 0; i < arraySize; i++)
+                {
+                    array[i] = i;
+                }
+                int[][] subArrays = new int[communicator.Size][];
+                for (int i = 0; i < communicator.Size; i++)
+                {
+                    int subArraySize = arraySize/communicator.Size;
+                    int remainder = arraySize % communicator.Size;
+                    subArrays[i] = new int[subArraySize + (i < remainder ? 1 : 0)];
+                    Array.Copy(array, i * subArraySize, subArrays[i], 0, subArrays[i].Length);
+                }
+                subArray = communicator.Scatter<int[]>(subArrays, 0);
+                Console.WriteLine($"Process {communicator.Rank} received subarray: {string.Join(", ", subArray)}");
+            }
+            else
+            {
+                subArray = communicator.Scatter<int[]>(0);
+                Console.WriteLine($"Process {communicator.Rank} received subarray: {string.Join(", ", subArray)}");
             }
             
+            BubbleSort(subArray);
+            Console.WriteLine($"Process {communicator.Rank} sorted subarray: {string.Join(", ", subArray)}");
+            communicator.Barrier(); // Wait for all processes to finish sorting
             
-            int subArraySize = arraySize/communicator.Size;
-            int remainder = arraySize % communicator.Size;
-            int[] subArray = new int[subArraySize + (communicator.Rank < remainder ? 1 : 0)];
             
         });
     }
