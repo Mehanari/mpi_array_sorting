@@ -23,14 +23,9 @@ internal class Program
             if (communicator.Rank == 0)
             {
                 Random rand = new Random();
-                //array = Enumerable.Range(0, arraySize).Select(_ => rand.Next(1000)).ToArray();
                 int[] array = null;
                 int arraySize = 100;
-                array = new int[arraySize];
-                for (int i = 0; i < arraySize; i++)
-                {
-                    array[i] = i;
-                }
+                array = Enumerable.Range(0, arraySize).Select(_ => rand.Next(1000)).ToArray();
                 int[][] subArrays = new int[communicator.Size][];
                 for (int i = 0; i < communicator.Size; i++)
                 {
@@ -51,8 +46,59 @@ internal class Program
             BubbleSort(subArray);
             Console.WriteLine($"Process {communicator.Rank} sorted subarray: {string.Join(", ", subArray)}");
             communicator.Barrier(); // Wait for all processes to finish sorting
-            
-            
+
+            bool sendingForward = true;
+            int exchangesCount = communicator.Size - 1 + communicator.Size % 2;
+            if (communicator.Rank % 2 == 0)
+            {
+                if (sendingForward && communicator.Rank < communicator.Size - 1)
+                {
+                    //Send subarray to the next process
+                    communicator.Send(subArray, communicator.Rank + 1, 0);
+                    //Receive subarray from the next process
+                    int[] receivedArray = communicator.Receive<int[]>(communicator.Rank + 1, 0);
+                    //Merge the received array with the current subarray
+                    subArray = Merge(subArray, receivedArray);
+                    Console.WriteLine($"Process {communicator.Rank} received subarray: {string.Join(", ", subArray)}");
+                    sendingForward = false;
+                }
+                else if (communicator.Rank > 0)
+                {
+                    //Receive subarray from the previous process
+                    int[] receivedArray = communicator.Receive<int[]>(communicator.Rank - 1, 0);
+                    //Send subarray to the previous process
+                    communicator.Send(subArray, communicator.Rank - 1, 0);
+                    //Merge the received array with the current subarray
+                    subArray = Merge(subArray, receivedArray);
+                    Console.WriteLine($"Process {communicator.Rank} received subarray: {string.Join(", ", subArray)}");
+                    sendingForward = true;
+                }
+            }
+            else
+            {
+                if (sendingForward)
+                {
+                    //Sending to the previous process
+                    communicator.Send(subArray, communicator.Rank - 1, 0);
+                    //Receiving from the previous process
+                    int[] receivedArray = communicator.Receive<int[]>(communicator.Rank - 1, 0);
+                    //Merging the received array with the current subarray
+                    subArray = Merge(subArray, receivedArray);
+                    Console.WriteLine($"Process {communicator.Rank} received subarray: {string.Join(", ", subArray)}");
+                    sendingForward = false;
+                }
+                else if (communicator.Rank < communicator.Size - 1)
+                {
+                    //Receiving from the next process
+                    int[] receivedArray = communicator.Receive<int[]>(communicator.Rank + 1, 0);
+                    //Sending to the next process
+                    communicator.Send(subArray, communicator.Rank + 1, 0);
+                    //Merging the received array with the current subarray
+                    subArray = Merge(subArray, receivedArray);
+                    Console.WriteLine($"Process {communicator.Rank} received subarray: {string.Join(", ", subArray)}");
+                    sendingForward = true;
+                }
+            }
         });
     }
     
