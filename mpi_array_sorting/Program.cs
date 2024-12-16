@@ -100,7 +100,8 @@ internal class Program
             {
                 auxStopwatch.Stop();
                 scatteringTicks = auxStopwatch.ElapsedTicks;
-                Console.WriteLine($"Scattering took {auxStopwatch.ElapsedMilliseconds} ms");
+                TimeSpan scatteringTime = auxStopwatch.Elapsed;
+                Console.WriteLine($"Scattering took {scatteringTime.TotalMilliseconds:0.000} ms");
             }
 
             //Console.WriteLine($"Coordinates of process {comm.Rank}: {string.Join(", ", comm.Coordinates)}");
@@ -120,7 +121,8 @@ internal class Program
             {
                 auxStopwatch.Stop();
                 sortingTicks = auxStopwatch.ElapsedTicks;
-                Console.WriteLine($"Sorting took {auxStopwatch.ElapsedMilliseconds} ms");
+                TimeSpan sortingTime = auxStopwatch.Elapsed;
+                Console.WriteLine($"Sorting took {sortingTime.TotalMilliseconds:0.000} ms");
             }
             
             //The communication phase
@@ -218,7 +220,8 @@ internal class Program
             {
                 auxStopwatch.Stop();
                 communicationTicks = auxStopwatch.ElapsedTicks;
-                Console.WriteLine($"Communication took {auxStopwatch.ElapsedMilliseconds} ms");
+                TimeSpan communicationTime = auxStopwatch.Elapsed;
+                Console.WriteLine($"Communication took {communicationTime.TotalMilliseconds:0.000} ms");
             }
 
 
@@ -251,10 +254,12 @@ internal class Program
                 int[] result = Concat(subArray, receivedArray);
                 auxStopwatch.Stop();
                 gatheringTicks = auxStopwatch.ElapsedTicks;
-                Console.WriteLine($"Gathering took {auxStopwatch.ElapsedMilliseconds} ms");
+                TimeSpan gatheringTime = auxStopwatch.Elapsed;
+                Console.WriteLine($"Gathering took {gatheringTime.TotalMilliseconds:0.000} ms");
                 mainStopwatch.Stop();
                 totalTicks = mainStopwatch.ElapsedTicks;
-                Console.WriteLine($"Total sorting time: {mainStopwatch.ElapsedMilliseconds} ms");
+                TimeSpan totalTime = mainStopwatch.Elapsed;
+                Console.WriteLine($"Total sorting time: {totalTime.TotalMilliseconds:0.000} ms");
                 float scatteringPercentage = (float)scatteringTicks * 100 / totalTicks;
                 float sortingPercentage = (float)sortingTicks * 100 / totalTicks;
                 float communicationPercentage = (float)communicationTicks * 100 / totalTicks;
@@ -274,7 +279,8 @@ internal class Program
                     auxStopwatch.Restart();
                     BubbleSort(array);
                     auxStopwatch.Stop();
-                    Console.WriteLine($"Single-threaded sorting took {auxStopwatch.ElapsedMilliseconds} ms");
+                    TimeSpan singleThreadedTime = auxStopwatch.Elapsed;
+                    Console.WriteLine($"Single-threaded sorting took {singleThreadedTime.TotalMilliseconds} ms");
                 }
             }
         });
